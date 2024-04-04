@@ -1,6 +1,7 @@
 #define TRIG_PIN 3 // Proximity Sensor: Ultrasonic pulse sending pin
 #define ECHO_PIN 2 // Proximity Sensor: Ultrasinic pulse recieving pin
 #define POT_PIN A5 // Potentiometer: Analog input pin
+#define MOTOR_PIN 17
 
 const int NUM_SAMPLES = 20;
 const int NUM_OUTLIERS = 5;
@@ -25,6 +26,7 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(POT_PIN, INPUT);
+  pinMode(MOTOR_PIN, OUTPUT);
 }
 
 void loop() {
