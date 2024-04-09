@@ -1,7 +1,8 @@
+#define MOT_POS_PIN 17 // DC Motor: Positive pin
+#define MOT_NEG_PIN 16 // DC Motor: Negative pin
 #define TRIG_PIN 3 // Proximity Sensor: Ultrasonic pulse sending pin
 #define ECHO_PIN 2 // Proximity Sensor: Ultrasinic pulse recieving pin
 #define POT_PIN A5 // Potentiometer: Analog input pin
-#define MOTOR_PIN 17
 
 const int NUM_SAMPLES = 20;
 const int NUM_OUTLIERS = 5;
@@ -17,8 +18,22 @@ float ultrasonicMeasureCM() {
   return 0.017 * pulseIn(ECHO_PIN, HIGH); // Conversion to CM
 }
 
-void moveLid() {
-  Serial.println("foobar!");
+// Spin motor clockwise
+void rotateRight() {
+  digitalWrite(MOT_NEG_PIN, LOW);
+  digitalWrite(MOT_POS_PIN, HIGH);
+}
+
+// Spin motor counter-clockwise
+void rotateLeft() {
+  digitalWrite(MOT_NEG_PIN, HIGH);
+  digitalWrite(MOT_POS_PIN, LOW);
+}
+
+// Cut power to motor
+void stopRotation() {
+  digitalWrite(MOT_NEG_PIN, LOW);
+  digitalWrite(MOT_POS_PIN, LOW);
 }
 
 void setup() {
@@ -26,7 +41,8 @@ void setup() {
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(POT_PIN, INPUT);
-  pinMode(MOTOR_PIN, OUTPUT);
+  pinMode(MOT_POS_PIN, OUTPUT);
+  pinMode(MOT_NEG_PIN, OUTPUT);
 }
 
 void loop() {
@@ -57,25 +73,31 @@ void loop() {
   float distanceCM = sum / (NUM_SAMPLES - (NUM_OUTLIERS * 2));
   int potAngleDegrees = analogRead(POT_PIN);
 
+  // TODO: this is inefficient. Switch to a rolling average?
   // Keep track of how long user has been absent
   cyclesUserAbsent = distanceCM < ACTIVIATION_THRESHOLD_CM ? 0 : cyclesUserAbsent + 1;
-  if (cyclesUserAbsent >= 500) {
-    cyclesUserAbsent = 1; //make sure cycle count does not reach integer limit
+  if (cyclesUserAbsent >= 1000) {
+    cyclesUserAbsent = 3; //make sure cycle count does not reach integer limit
   }
 
   // Open, close, or standby toilet lid 
   if (cyclesUserAbsent > 3 && potAngleDegrees > 500) {
+    rotateLeft();
     Serial.println("Closing the lid!");
   }
   else if (cyclesUserAbsent == 0 && potAngleDegrees < 5) {
+    rotateRight();
     Serial.println("Opening the lid!");
   }
   else {
+    stopRotation();
     Serial.println("Waiting for movement...");
   }
 
   // Serial monitor readout
   Serial.print(distanceCM);
   Serial.print("  ");
-  Serial.println(potAngleDegrees);
+  Serial.print(potAngleDegrees);
+  Serial.print("  ");
+  Serial.println(cyclesUserAbsent);
 }
