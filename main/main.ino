@@ -1,8 +1,8 @@
-#define MOT_POS_PIN 17 // DC Motor: Positive pin
-#define MOT_NEG_PIN 16 // DC Motor: Negative pin
-#define TRIG_PIN 3 // Proximity Sensor: Ultrasonic pulse sending pin
-#define ECHO_PIN 2 // Proximity Sensor: Ultrasinic pulse recieving pin
-#define POT_PIN A5 // Potentiometer: Analog input pin
+#define MOTOR_POSITIVE 8 // DC Motor: Positive pin
+#define MOTOR_NEGATIVE 7 // DC Motor: Negative pin
+#define PROXIMITY_TRIG 3 // Proximity Sensor: Ultrasonic pulse sending pin
+#define PROXIMITY_ECHO 2 // Proximity Sensor: Ultrasinic pulse recieving pin
+#define POTENTIOMETER A5 // Potentiometer: Analog input pin
 
 const int NUM_SAMPLES = 20;
 const int NUM_OUTLIERS = 5;
@@ -11,38 +11,38 @@ int cyclesUserAbsent;
 
 // Get data from ultrasonic sensor and convert to distance in centimeters
 float ultrasonicMeasureCM() {
-  digitalWrite(TRIG_PIN, HIGH);
+  digitalWrite(PROXIMITY_TRIG, HIGH);
   delayMicroseconds(10);
-  digitalWrite(TRIG_PIN, LOW);
+  digitalWrite(PROXIMITY_TRIG, LOW);
 
-  return 0.017 * pulseIn(ECHO_PIN, HIGH); // Conversion to CM
+  return 0.017 * pulseIn(PROXIMITY_ECHO, HIGH); // Conversion to CM
 }
 
 // Spin motor clockwise
 void rotateRight() {
-  digitalWrite(MOT_NEG_PIN, LOW);
-  digitalWrite(MOT_POS_PIN, HIGH);
+  digitalWrite(MOTOR_NEGATIVE, LOW);
+  digitalWrite(MOTOR_POSITIVE, HIGH);
 }
 
 // Spin motor counter-clockwise
 void rotateLeft() {
-  digitalWrite(MOT_NEG_PIN, HIGH);
-  digitalWrite(MOT_POS_PIN, LOW);
+  digitalWrite(MOTOR_NEGATIVE, HIGH);
+  digitalWrite(MOTOR_POSITIVE, LOW);
 }
 
 // Cut power to motor
 void stopRotation() {
-  digitalWrite(MOT_NEG_PIN, LOW);
-  digitalWrite(MOT_POS_PIN, LOW);
+  digitalWrite(MOTOR_NEGATIVE, LOW);
+  digitalWrite(MOTOR_POSITIVE, LOW);
 }
 
 void setup() {
   Serial.begin(9600);
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-  pinMode(POT_PIN, INPUT);
-  pinMode(MOT_POS_PIN, OUTPUT);
-  pinMode(MOT_NEG_PIN, OUTPUT);
+  pinMode(PROXIMITY_TRIG, OUTPUT);
+  pinMode(PROXIMITY_ECHO, INPUT);
+  pinMode(POTENTIOMETER, INPUT);
+  pinMode(MOTOR_POSITIVE, OUTPUT);
+  pinMode(MOTOR_NEGATIVE, OUTPUT);
 }
 
 void loop() {
@@ -71,7 +71,7 @@ void loop() {
 
   // Get average of middle samples
   float distanceCM = sum / (NUM_SAMPLES - (NUM_OUTLIERS * 2));
-  int potAngleDegrees = analogRead(POT_PIN);
+  int potAngleDegrees = analogRead(POTENTIOMETER);
 
   // TODO: this is inefficient. Switch to a rolling average?
   // Keep track of how long user has been absent
