@@ -1,13 +1,23 @@
-#define MOTOR_POSITIVE 8 // DC Motor: Positive pin
-#define MOTOR_NEGATIVE 7 // DC Motor: Negative pin
+#include <Servo.h>
+
+#define SERVO_PWM 9 // Servo motor: Signal pin
 #define PROXIMITY_TRIG 3 // Proximity Sensor: Ultrasonic pulse sending pin
 #define PROXIMITY_ECHO 2 // Proximity Sensor: Ultrasinic pulse recieving pin
-#define POTENTIOMETER A5 // Potentiometer: Analog input pin
 
+Servo motor;
 const int NUM_SAMPLES = 20;
 const int NUM_OUTLIERS = 5;
 const float ACTIVIATION_THRESHOLD_CM = 10.00;
 int cyclesUserAbsent;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PROXIMITY_TRIG, OUTPUT);
+  pinMode(PROXIMITY_ECHO, INPUT);
+  motor.attach(SERVO_PWM);
+
+  Serial.println("Program Initialized.");
+}
 
 // Get data from ultrasonic sensor and convert to distance in centimeters
 float ultrasonicMeasureCM() {
@@ -18,31 +28,15 @@ float ultrasonicMeasureCM() {
   return 0.017 * pulseIn(PROXIMITY_ECHO, HIGH); // Conversion to CM
 }
 
-// Spin motor clockwise
-void rotateRight() {
-  digitalWrite(MOTOR_NEGATIVE, LOW);
-  digitalWrite(MOTOR_POSITIVE, HIGH);
-}
+void rotateMotor(int angleStop, unsigned long movingTimeMs) {
+  int angleStart = motor.read();
+  unsigned long moveStartMs = millis();
 
-// Spin motor counter-clockwise
-void rotateLeft() {
-  digitalWrite(MOTOR_NEGATIVE, HIGH);
-  digitalWrite(MOTOR_POSITIVE, LOW);
-}
-
-// Cut power to motor
-void stopRotation() {
-  digitalWrite(MOTOR_NEGATIVE, LOW);
-  digitalWrite(MOTOR_POSITIVE, LOW);
-}
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(PROXIMITY_TRIG, OUTPUT);
-  pinMode(PROXIMITY_ECHO, INPUT);
-  pinMode(POTENTIOMETER, INPUT);
-  pinMode(MOTOR_POSITIVE, OUTPUT);
-  pinMode(MOTOR_NEGATIVE, OUTPUT);
+  while (motor.read() != angleStop) {
+    unsigned long progress = millis() - moveStartMs;
+    long angle = map(progress, 0, movingTimeMs, angleStart, angleStop); // I don't know why this works
+    motor.write(angle);
+  }
 }
 
 void loop() {
@@ -71,7 +65,6 @@ void loop() {
 
   // Get average of middle samples
   float distanceCM = sum / (NUM_SAMPLES - (NUM_OUTLIERS * 2));
-  int potAngleDegrees = analogRead(POTENTIOMETER);
 
   // TODO: this is inefficient. Switch to a rolling average?
   // Keep track of how long user has been absent
@@ -81,23 +74,21 @@ void loop() {
   }
 
   // Open, close, or standby toilet lid 
-  if (cyclesUserAbsent > 3 && potAngleDegrees > 500) {
-    rotateLeft();
+  if (cyclesUserAbsent > 3 && motor.read() > 5) {
     Serial.println("Closing the lid!");
+    rotateMotor(0, 5000);
   }
-  else if (cyclesUserAbsent == 0 && potAngleDegrees < 5) {
-    rotateRight();
+  else if (cyclesUserAbsent == 0 && motor.read() <= 5) {
     Serial.println("Opening the lid!");
+    rotateMotor(97, 5000);
   }
   else {
-    stopRotation();
     Serial.println("Waiting for movement...");
+    // Serial monitor readout
+    Serial.print(distanceCM);
+    Serial.print("  ");
+    Serial.print(motor.read());
+    Serial.print("  ");
+    Serial.println(cyclesUserAbsent);
   }
-
-  // Serial monitor readout
-  Serial.print(distanceCM);
-  Serial.print("  ");
-  Serial.print(potAngleDegrees);
-  Serial.print("  ");
-  Serial.println(cyclesUserAbsent);
 }
