@@ -28,6 +28,7 @@ float ultrasonicMeasureCM() {
     return 0.017 * pulseIn(PROXIMITY_ECHO, HIGH); // Conversion to CM
 }
 
+// Rotate motor to desired angleStop in desiredMovingTimeMS
 void rotateMotor(int angleStop, unsigned long desiredMovingTimeMS) {
     int angleStart = motor.read();
     unsigned long elapsedMovingTimeMS = millis();
