@@ -30,13 +30,12 @@ void loop() {
         Serial.print(i);
         Serial.print("... ");
 
-        rotateMotor(0, 3000);
+        rotateMotor(0, 2000);
         delay(1500);
-        rotateMotor(90, 3000);
+        rotateMotor(90, 2000);
         delay(1500);
 
         Serial.println("Complete!");
-    }
 
     Serial.print("Test complete!");
 
