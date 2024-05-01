@@ -6,7 +6,9 @@
 #define PROXIMITY_ECHO 2 // Proximity Sensor: Ultrasinic pulse recieving pin
 
 Servo motor;
-movingAvg proximitySensor(20);
+movingAvg proximitySensor(10);
+const int LID_SHUT_ANGLE = 60;
+const int LID_OPEN_ANGLE = 0;
 const float ACTIVIATION_THRESHOLD_CM = 10.00;
 
 void setup() {
@@ -29,7 +31,7 @@ float ultrasonicMeasureCM() {
 }
 
 // Rotate motor to desired angleStop in desiredMovingTimeMS
-void rotateMotor(int angleStop, unsigned long desiredMovingTimeMS) {
+void rotateMotorTimed(int angleStop, unsigned long desiredMovingTimeMS) {
     int angleStart = motor.read();
     unsigned long elapsedMovingTimeMS = millis();
 
@@ -40,25 +42,43 @@ void rotateMotor(int angleStop, unsigned long desiredMovingTimeMS) {
     }
 }
 
+void rotateMotor(int desiredAngle) {
+    int startAngle = motor.read();
+    int increment = desiredAngle > startAngle ? 1 : -1;
+    
+    for (int angle = startAngle; angle != desiredAngle; angle += increment) {
+        Serial.println(angle);
+        motor.write(angle);
+        delay(20);
+    }
+}
+
 void loop() {
+    Serial.print("| State: ");
+
     // Take measurements
-    float distanceCM = proximitySensor.reading(ultrasonicMeasureCM());
     int servoAngle = motor.read();
+    float distanceCM = proximitySensor.reading(ultrasonicMeasureCM());
 
     // Open, close, or standby toilet lid 
-    if (distanceCM > ACTIVIATION_THRESHOLD_CM && servoAngle > 5) {
-        Serial.println("Closing the lid!");
-        rotateMotor(0, 5000); // opens new loop
+    if (distanceCM > ACTIVIATION_THRESHOLD_CM) {
+        Serial.print("Closing the lid!");
+        motor.write(LID_SHUT_ANGLE);
     }
-    else if (distanceCM >= ACTIVIATION_THRESHOLD_CM && servoAngle <= 5) {
-        Serial.println("Opening the lid!");
-        rotateMotor(90, 5000); // opens new loop
+    else if (distanceCM <= ACTIVIATION_THRESHOLD_CM) {
+        Serial.print("Opening the lid!");
+        motor.write(LID_OPEN_ANGLE);
+        // delay(5000); optional delay to help people fit demons on the toilet
     }
     else {
-        Serial.println("Waiting for movement...");
-        // Serial monitor readout
-        Serial.print(distanceCM);
-        Serial.print("    ");
-        Serial.println(servoAngle);
+        Serial.println("Waiting for movement.");
     }
+    
+    Serial.print(" | Distance: ");
+    Serial.print(distanceCM);
+    Serial.print(" | Angle: ");
+    Serial.print(servoAngle);
+    Serial.println(" |");
+
+    delay(100);
 }
