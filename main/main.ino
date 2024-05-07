@@ -1,21 +1,23 @@
 #include <Servo.h>
-#include <movingAvg.h>
+#include <movingAvg.h> // 17 inches off, 25 inch diag
 
 #define SERVO_PWM 9 // Servo motor: Signal pin
 #define PROXIMITY_TRIG 3 // Proximity Sensor: Ultrasonic pulse sending pin
 #define PROXIMITY_ECHO 2 // Proximity Sensor: Ultrasinic pulse recieving pin
 
 Servo motor;
-movingAvg proximitySensor(10);
-const int LID_SHUT_ANGLE = 60;
+movingAvg proximitySensor(15);
+const int LID_CLOSE_ANGLE = 60;
 const int LID_OPEN_ANGLE = 0;
-const float ACTIVIATION_THRESHOLD_CM = 10.00;
+const float OPENING_THRESHOLD_CM = 80;
+const float CLOSING_THRESHOLD_CM = 110;
 
 void setup() {
     Serial.begin(9600);
     pinMode(PROXIMITY_TRIG, OUTPUT);
     pinMode(PROXIMITY_ECHO, INPUT);
     motor.attach(SERVO_PWM);
+    motor.write(LID_CLOSE_ANGLE);
     proximitySensor.begin();
 
     Serial.println("Program Initialized.");
@@ -61,17 +63,16 @@ void loop() {
     float distanceCM = proximitySensor.reading(ultrasonicMeasureCM());
 
     // Open, close, or standby toilet lid 
-    if (distanceCM > ACTIVIATION_THRESHOLD_CM) {
-        Serial.print("Closing the lid!");
-        motor.write(LID_SHUT_ANGLE);
+    if (distanceCM > CLOSING_THRESHOLD_CM) {
+        Serial.print("Closing...");
+        motor.write(LID_CLOSE_ANGLE);
     }
-    else if (distanceCM <= ACTIVIATION_THRESHOLD_CM) {
-        Serial.print("Opening the lid!");
+    else if (distanceCM < OPENING_THRESHOLD_CM) {
+        Serial.print("Opening...");
         motor.write(LID_OPEN_ANGLE);
-        // delay(5000); optional delay to help people fit demons on the toilet
     }
     else {
-        Serial.println("Waiting for movement.");
+        Serial.print("Waiting...");
     }
     
     Serial.print(" | Distance: ");
