@@ -6,11 +6,11 @@
 #define PROXIMITY_ECHO 2 // Proximity Sensor: Ultrasinic pulse recieving pin
 
 Servo motor;
-movingAvg proximitySensor(15);
-const int LID_CLOSE_ANGLE = 60;
+movingAvg proximitySensor(10);
+const int LID_CLOSE_ANGLE = 31;
 const int LID_OPEN_ANGLE = 0;
 const float OPENING_THRESHOLD_CM = 80;
-const float CLOSING_THRESHOLD_CM = 110;
+const float CLOSING_THRESHOLD_CM = 120;
 
 void setup() {
     Serial.begin(9600);
@@ -44,6 +44,7 @@ void rotateMotorTimed(int angleStop, unsigned long desiredMovingTimeMS) {
     }
 }
 
+// Rotate motor degree by degree to desiredAngle
 void rotateMotor(int desiredAngle) {
     int startAngle = motor.read();
     int increment = desiredAngle > startAngle ? 1 : -1;
@@ -56,30 +57,23 @@ void rotateMotor(int desiredAngle) {
 }
 
 void loop() {
-    Serial.print("| State: ");
-
-    // Take measurements
-    int servoAngle = motor.read();
+    String state;
     float distanceCM = proximitySensor.reading(ultrasonicMeasureCM());
 
     // Open, close, or standby toilet lid 
     if (distanceCM > CLOSING_THRESHOLD_CM) {
-        Serial.print("Closing...");
+        state = "Closing...";
         motor.write(LID_CLOSE_ANGLE);
     }
     else if (distanceCM < OPENING_THRESHOLD_CM) {
-        Serial.print("Opening...");
+        state = "Opening...";
         motor.write(LID_OPEN_ANGLE);
+        delay(1000); // optional additional delay to prevent false negatives
     }
     else {
-        Serial.print("Waiting...");
+        state = "Waiting...";
     }
     
-    Serial.print(" | Distance: ");
-    Serial.print(distanceCM);
-    Serial.print(" | Angle: ");
-    Serial.print(servoAngle);
-    Serial.println(" |");
-
+    Serial.println("| State: "+state+" | Distance: "+distanceCM+" | Angle: "+motor.read()+" |");
     delay(100);
 }
