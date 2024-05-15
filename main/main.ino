@@ -7,7 +7,7 @@
 
 Servo motor;
 movingAvg proximitySensor(10);
-const int LID_CLOSE_ANGLE = 31;
+const int LID_CLOSE_ANGLE = 57;
 const int LID_OPEN_ANGLE = 0;
 const float OPENING_THRESHOLD_CM = 80;
 const float CLOSING_THRESHOLD_CM = 120;
